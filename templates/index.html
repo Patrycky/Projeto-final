@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Acesso Wayne Industries</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <h1>Login Wayne Industries</h1>
+    <form id="login-form">
+        <input type="text" id="username" placeholder="Usuário" required>
+        <input type="password" id="password" placeholder="Senha" required>
+        <button type="submit">Login</button>
+        <button type="button" onclick="logout()">Logoff</button>
+    </form>
+    <div id="message"></div>
+
+    <div id="areas" style="display:none;">
+        <h2>Acesso às Áreas</h2>
+        <button onclick="getDashboard()">Ver Dashboard</button>
+        <button onclick="accessArea('Laboratório')">Laboratório</button>
+        <button onclick="accessArea('Sala de Operações')">Sala de Operações</button>
+        <button onclick="accessArea('Construção')">Construção</button>
+        <button onclick="accessArea('Pesquisa')">Pesquisa</button>
+        <button onclick="accessArea('Batcaverna')">Batcaverna</button>
+        <button onclick="getInventory()">Ver Inventário do Batman</button>
+        
+    </div>
+
+    <div id="admin-panel" style="display:none;">
+        <h2>Painel de Administração</h2>
+        
+        <h3>Adicionar Usuário</h3>
+        <input type="text" id="new-username" placeholder="Novo Usuário" required>
+        <input type="password" id="new-password" placeholder="Nova Senha" required>
+        <select id="new-role" required>
+            <option value="Técnico">Técnico</option>
+            <option value="Gerente">Gerente</option>
+            <option value="Engenheiro">Engenheiro</option>
+        </select>
+        <button onclick="addUser()">Adicionar</button>
+
+    </div>
+
+    <div id="inventory" style="display:none;">
+        <h2>Inventário do Batman</h2>
+        <ul id="inventory-list"></ul>
+    </div>
+
+    <div id="dashboard" style="display:none;">
+        <h2>Dashboard</h2>
+        <div id="dashboard-content"></div>
+    </div>
+
+    <script>
+        // Armazena o token no localStorage após o login
+        document.getElementById('login-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.token) {
+                    localStorage.setItem('token', data.token);  // Armazena o token
+                    document.getElementById('areas').style.display = 'block';
+                    document.getElementById('message').innerText = data.message;
+                    if (username === "wayne") {
+                        document.getElementById('admin-panel').style.display = 'block';
+                    }
+                } else {
+                    document.getElementById('message').innerText = data.message;
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                document.getElementById('message').innerText = 'Erro ao tentar fazer login';
+            });
+        });
+
+        function logout() {
+            localStorage.removeItem('token');  // Remove o token
+            document.getElementById('areas').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'none';
+            document.getElementById('message').innerText = 'Você foi desconectado.';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+
+            // Redireciona para a página de login
+            window.location.href = 'http://127.0.0.1:5000//';  // A URL da tela de login, altere conforme necessário
+        }
+        
+
+        function accessArea(area) {
+            fetch('/access', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ area })
+            })
+            .then(response => response.text())
+            .then(data => {
+                document.body.innerHTML += `<div>${data}</div>`;
+            })
+            .catch(error => {
+                console.error('Erro ao acessar a área:', error);
+            });
+        }
+
+        function getInventory() {
+    fetch('/batman_inventory', {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const inventoryList = document.getElementById('inventory-list');
+        inventoryList.innerHTML = '';  // Limpar a lista de inventário antes de adicionar novos itens
+
+        data.items.forEach(item => {
+            const li = document.createElement('li');
+            
+            // Criar um contêiner para o nome, descrição e imagem
+            const itemContent = document.createElement('div');
+            const name = document.createElement('h3');
+            name.innerText = item.name;
+            const description = document.createElement('p');
+            description.innerText = item.description;
+            
+            // Criar o elemento da imagem
+            const image = document.createElement('img');
+            image.src = item.image;  // Definir a URL da imagem
+            image.alt = item.name;  // Definir o texto alternativo da imagem
+            image.style.width = '100px';  // Ajustar o tamanho da imagem
+            image.style.height = 'auto';  // Manter a proporção da imagem
+
+            // Montar o conteúdo do item e adicionar ao item da lista
+            itemContent.appendChild(name);
+            itemContent.appendChild(description);
+            itemContent.appendChild(image);
+            li.appendChild(itemContent);
+
+            // Adicionar o item à lista de inventário
+            inventoryList.appendChild(li);
+        });
+
+        // Exibir o inventário
+        document.getElementById('inventory').style.display = 'block';
+    })
+    .catch(error => {
+        console.error('Erro ao buscar o inventário:', error);
+    });
+}
+        function addUser() {
+            const newUsername = document.getElementById('new-username').value;
+            const newPassword = document.getElementById('new-password').value;
+            const newRole = document.getElementById('new-role').value;
+
+            fetch('/add_user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ username: newUsername, password: newPassword, role: newRole })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+            })
+            .catch(error => {
+                console.error('Erro ao adicionar usuário:', error);
+            });
+        }
+
+        function removeUser() {
+            const usernameToRemove = document.getElementById('remove-username').value;
+            fetch('/delete_user_simple', {  // Alterada para usar a nova rota
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ username: usernameToRemove })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+            })
+            .catch(error => {
+                console.error('Erro ao remover usuário:', error);
+            });
+        }
+
+        function getDashboard() {
+            fetch('/dashboard', {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const dashboardContent = document.getElementById('dashboard-content');
+                dashboardContent.innerHTML = '';
+                for (const key in data) {
+                    const div = document.createElement('div');
+                    div.innerText = `${key}: ${data[key]}`;
+                    dashboardContent.appendChild(div);
+                }
+                document.getElementById('dashboard').style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Erro ao acessar o dashboard:', error);
+            });
+        }
+
+    </script>
+</body>
+</html>
+

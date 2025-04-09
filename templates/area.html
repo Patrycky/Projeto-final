@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso à Área - Wayne Industries</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Acesso à Área: {{ area }}</h1>
+        {% if area == 'Batcaverna' %}
+            <img src="{{ url_for('static', filename='batcaverna.jpg') }}" alt="Batcaverna" class="img-fluid">
+        {% elif area == 'Laboratório' %}
+            <img src="{{ url_for('static', filename='laboratorio.jpg') }}" alt="Laboratório" class="img-fluid">
+        {% elif area == 'Sala de Operações' %}
+            <img src="{{ url_for('static', filename='sala_operacoes.jpg') }}" alt="Sala de Operações" class="img-fluid">
+        {% elif area == 'Construção' %}
+            <img src="{{ url_for('static', filename='construcao.jpg') }}" alt="Construção" class="img-fluid">
+        {% elif area == 'Pesquisa' %}
+            <img src="{{ url_for('static', filename='pesquisa.jpg') }}" alt="Pesquisa" class="img-fluid">
+        {% endif %}
+        <a href="/" class="btn btn-secondary mt-3">SAIR</a>
+    </div>
+</body>
+</html>
+
+
+
+
